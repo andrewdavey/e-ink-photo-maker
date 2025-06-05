@@ -163,33 +163,31 @@ function App({ colorTable }: { colorTable: ColorTable }) {
   };
 
   const handleMouseDown: React.MouseEventHandler<HTMLDivElement> = (e) => {
+    const container = e.currentTarget.parentElement!;
+    const rect = container.getBoundingClientRect();
+    // mouse coords in the content’s coordinate system
+    const x = e.clientX - rect.left + container.scrollLeft;
+    const y = e.clientY - rect.top + container.scrollTop;
+    setDragOffset({ x: x - framePosition.x, y: y - framePosition.y });
     setIsDragging(true);
-    const rect = e.currentTarget.getBoundingClientRect();
-    setDragOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
     e.preventDefault();
   };
 
   const handleMouseMove: React.MouseEventHandler = (e) => {
     if (!isDragging || !sourceImage) return;
 
-    const canvasRect = {
-      width: sourceImage.width * scale,
-      height: sourceImage.height * scale,
-    };
+    const container = e.currentTarget.parentElement!;
 
-    const newX = e.clientX - dragOffset.x;
-    const newY = e.clientY - dragOffset.y;
-
-    // Constrain to canvas bounds
-    const maxX = canvasRect.width - frameSize.width;
-    const maxY = canvasRect.height - frameSize.height;
-
+    const rect = container.getBoundingClientRect();
+    const x = e.clientX - rect.left + container.scrollLeft;
+    const y = e.clientY - rect.top + container.scrollTop;
+    const rawX = x - dragOffset.x;
+    const rawY = y - dragOffset.y;
+    const maxX = sourceImage.width * scale - frameSize.width;
+    const maxY = sourceImage.height * scale - frameSize.height;
     setFramePosition({
-      x: Math.max(0, Math.min(newX, maxX)),
-      y: Math.max(0, Math.min(newY, maxY)),
+      x: Math.max(0, Math.min(rawX, maxX)),
+      y: Math.max(0, Math.min(rawY, maxY)),
     });
   };
 
@@ -198,7 +196,7 @@ function App({ colorTable }: { colorTable: ColorTable }) {
   };
 
   return (
-    <div className="p-4">
+    <div className="app">
       {view === "edit" ? (
         <div className="toolbar">
           <input type="file" accept="image/jpeg" onChange={handleFileChange} />
@@ -223,34 +221,32 @@ function App({ colorTable }: { colorTable: ColorTable }) {
       )}
 
       <div className="container">
-        <div className="image">
-          <canvas
-            ref={canvasRef}
+        <canvas
+          ref={canvasRef}
+          style={{
+            pointerEvents: "none",
+            width: sourceImage ? sourceImage.width * scale : "100%",
+            height: sourceImage ? sourceImage.height * scale : "100%",
+          }}
+        />
+        {sourceImage && view === "edit" && (
+          <div
             style={{
-              pointerEvents: "none",
-              width: sourceImage ? sourceImage.width * scale : "100%",
-              height: sourceImage ? sourceImage.height * scale : "100%",
+              position: "absolute",
+              outline: "2px dashed red",
+              width: frameSize.width,
+              height: frameSize.height,
+              top: framePosition.y,
+              left: framePosition.x,
+              cursor: isDragging ? "grabbing" : "grab",
+              userSelect: "none",
             }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
           />
-          {sourceImage && view === "edit" && (
-            <div
-              style={{
-                position: "absolute",
-                outline: "2px dashed red",
-                width: frameSize.width,
-                height: frameSize.height,
-                top: framePosition.y,
-                left: framePosition.x,
-                cursor: isDragging ? "grabbing" : "grab",
-                userSelect: "none",
-              }}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-            />
-          )}
-        </div>
+        )}
       </div>
     </div>
   );
