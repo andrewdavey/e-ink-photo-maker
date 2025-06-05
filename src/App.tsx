@@ -199,7 +199,25 @@ function App({ colorTable }: { colorTable: ColorTable }) {
     <div className="app">
       {view === "edit" ? (
         <div className="toolbar">
-          <input type="file" accept="image/jpeg" onChange={handleFileChange} />
+          <button
+            onClick={(e) => {
+              e.currentTarget.nextElementSibling?.dispatchEvent(
+                new MouseEvent("click", {
+                  bubbles: true,
+                  cancelable: true,
+                  composed: true,
+                })
+              );
+            }}
+          >
+            Open Image
+          </button>
+          <input
+            type="file"
+            accept="image/jpeg"
+            onChange={handleFileChange}
+            style={{ display: "none" }}
+          />
           <button disabled={!sourceImage} onClick={rotateFrame}>
             Rotate Frame
           </button>
