@@ -26,8 +26,11 @@ export function createBitmap(
   offset += 4; // Header size
   view.setInt32(offset, width, true);
   offset += 4;
-  view.setInt32(offset, -height, true);
-  offset += 4; // Top-down bitmap
+
+  // Positive height  => bottom-up bitmap (device-friendly)
+  view.setInt32(offset, height, true);
+  offset += 4;
+
   view.setUint16(offset, 1, true);
   offset += 2; // Planes
   view.setUint16(offset, 24, true);
@@ -48,7 +51,9 @@ export function createBitmap(
   // Pixel Data
   const data = imageData.data;
   let p = 54;
-  for (let y = 0; y < height; y++) {
+
+  // Write rows from bottom to top
+  for (let y = height - 1; y >= 0; y--) {
     const row: number[] = [];
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4;
