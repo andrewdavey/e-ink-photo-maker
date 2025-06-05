@@ -52,7 +52,25 @@ function App({ colorTable }: { colorTable: ColorTable }) {
       const scaledHeight = sourceImage.height * scale;
       canvas.width = scaledWidth;
       canvas.height = scaledHeight;
+
+      // 1) draw the image
       ctx.drawImage(sourceImage, 0, 0, scaledWidth, scaledHeight);
+
+      // 2) build a path: full-canvas rect minus the inner frame rect
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, scaledWidth, scaledHeight);
+      ctx.rect(
+        framePosition.x,
+        framePosition.y,
+        frameSize.width,
+        frameSize.height
+      );
+
+      // 3) fill with "evenodd" so the inner rect is punched out
+      ctx.fillStyle = "rgba(0,0,0,0.5)";
+      ctx.fill("evenodd");
+      ctx.restore();
     };
 
     const renderPreview = () => {
@@ -163,7 +181,7 @@ function App({ colorTable }: { colorTable: ColorTable }) {
   };
 
   const handleMouseDown: React.MouseEventHandler<HTMLDivElement> = (e) => {
-    const container = e.currentTarget.parentElement!;
+    const container = e.currentTarget;
     const rect = container.getBoundingClientRect();
     // mouse coords in the content’s coordinate system
     const x = e.clientX - rect.left + container.scrollLeft;
@@ -176,7 +194,7 @@ function App({ colorTable }: { colorTable: ColorTable }) {
   const handleMouseMove: React.MouseEventHandler = (e) => {
     if (!isDragging || !sourceImage) return;
 
-    const container = e.currentTarget.parentElement!;
+    const container = e.currentTarget;
 
     const rect = container.getBoundingClientRect();
     const x = e.clientX - rect.left + container.scrollLeft;
@@ -238,7 +256,16 @@ function App({ colorTable }: { colorTable: ColorTable }) {
         </div>
       )}
 
-      <div className="container">
+      <div
+        className="container"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        style={{
+          cursor: isDragging ? "grabbing" : "grab",
+        }}
+      >
         <canvas
           ref={canvasRef}
           style={{
@@ -247,24 +274,6 @@ function App({ colorTable }: { colorTable: ColorTable }) {
             height: sourceImage ? sourceImage.height * scale : "100%",
           }}
         />
-        {sourceImage && view === "edit" && (
-          <div
-            style={{
-              position: "absolute",
-              outline: "2px dashed red",
-              width: frameSize.width,
-              height: frameSize.height,
-              top: framePosition.y,
-              left: framePosition.x,
-              cursor: isDragging ? "grabbing" : "grab",
-              userSelect: "none",
-            }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-          />
-        )}
       </div>
     </div>
   );
