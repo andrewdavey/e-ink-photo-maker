@@ -53,10 +53,12 @@ function App({ colorTable }: { colorTable: ColorTable }) {
       canvas.width = scaledWidth;
       canvas.height = scaledHeight;
 
-      // 1) draw the image
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
       ctx.drawImage(sourceImage, 0, 0, scaledWidth, scaledHeight);
 
-      // 2) build a path: full-canvas rect minus the inner frame rect
+      // Draw the selection frame as a mask.
+      // So the outside of the frame is darkened.
       ctx.save();
       ctx.beginPath();
       ctx.rect(0, 0, scaledWidth, scaledHeight);
@@ -67,7 +69,6 @@ function App({ colorTable }: { colorTable: ColorTable }) {
         frameSize.height
       );
 
-      // 3) fill with "evenodd" so the inner rect is punched out
       ctx.fillStyle = "rgba(0,0,0,0.5)";
       ctx.fill("evenodd");
       ctx.restore();
@@ -82,13 +83,13 @@ function App({ colorTable }: { colorTable: ColorTable }) {
         frameSize.height
       );
 
+      canvas.width = frameSize.width;
+      canvas.height = frameSize.height;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       const dithered = floydSteinbergDither(selection, colorTable);
       ctx.putImageData(dithered, 0, 0);
     };
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (view === "edit") {
       renderEdit();
@@ -270,8 +271,6 @@ function App({ colorTable }: { colorTable: ColorTable }) {
           ref={canvasRef}
           style={{
             pointerEvents: "none",
-            width: sourceImage ? sourceImage.width * scale : "100%",
-            height: sourceImage ? sourceImage.height * scale : "100%",
           }}
         />
       </div>
